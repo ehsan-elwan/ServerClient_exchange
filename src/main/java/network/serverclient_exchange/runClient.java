@@ -23,7 +23,9 @@ public class runClient {
     public static void main(String[] args) throws InvalidAlgorithmParameterException {
 
         try {
-            ClientTCP client = new ClientTCP("localhost", 4444);
+            ClientTCP client = new ClientTCP("localhost", 47101);
+            //Service Name and Transport Protocol Port Number Registry Unassigned Port Number
+         
 
         } catch (IOException | NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException ex) {
             Logger.getLogger(runClient.class.getName()).log(Level.SEVERE, null, ex);
