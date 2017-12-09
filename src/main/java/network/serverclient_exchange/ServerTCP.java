@@ -52,6 +52,13 @@ public class ServerTCP extends ServerSocket {
     private PrintWriter pw;
     private final Scanner input;
 
+    
+         /**
+         * initializer le serveur:
+	 * initializer le serverSocket, Input, keyGenerator
+         * generer la clé de cryptage de serveur avec l'algo AES / exporter la clé dans un fichier txt serverKey
+         * 
+         **/
     public ServerTCP(int port) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException {
         this.serverSocket = new ServerSocket(port);
         input = new Scanner(new InputStreamReader(System.in));
@@ -60,7 +67,15 @@ public class ServerTCP extends ServerSocket {
         exportkey();
 
     }
-
+     
+        /**
+         * écouter sur le port et attend un client serverSocket.accept()
+	 * initializer les Input/Output StreamWriter, PrintWriter,BufferedReader
+         * generer la clé de la client avec l'algo AES / exporter la clé dans un fichier txt clientKey
+         * importer la clé du client a partir de fichier clientKey 
+         * mettre le serveur en attente de recevoir un message
+         * 
+         **/
     public void getConnection() {
         try {
             System.out.println("Waiting for new client!");
@@ -80,7 +95,12 @@ public class ServerTCP extends ServerSocket {
             Logger.getLogger(ServerTCP.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+        /**
+         * méthode permettant au serveur de terminer la connection
+         * fermer les buffer,input/output
+         * mettre le serveur en attente de recevoir un message
+         * 
+         **/
     public void closeConnection() {
         try {
             client.close();
@@ -94,11 +114,18 @@ public class ServerTCP extends ServerSocket {
         }
 
     }
+    
+         /**
+         * méthode permettant au serveur d'envoyer des messages au client
+         * crypter le message avec la clé du client
+         * ensuite le serveur attend la reposne du client
+         * 
+         **/
 
     private void sendMessage() {
         String inputMessage;
         inputMessage = input.nextLine();
-        String tosend = encrypt(serverkey, inputMessage);
+        String tosend = encrypt(clientkey, inputMessage);
         pw.println(tosend);
         pw.flush();
         System.out.println("Message sent to the client : " + inputMessage);
@@ -110,6 +137,12 @@ public class ServerTCP extends ServerSocket {
         }
     }
 
+         /**
+         * méthode permettant au serveur d'recevoir des messages du client
+         * decrypter le message avec la clé du serveur
+         * ensuite le serveur va envoyer sa reposne au client
+         * 
+         **/
     private void getMessage() {
         String msg = "";
         String decmsg="";
@@ -117,7 +150,7 @@ public class ServerTCP extends ServerSocket {
         try {
             msg = br.readLine();
             System.out.println("Crypted Message from client is " + msg);
-            decmsg = decrypt(clientkey, msg);
+            decmsg = decrypt(serverkey, msg);
             System.out.println("Deccrypted Message from client is " + decmsg);
 
         } catch (IOException ex) {
@@ -132,7 +165,10 @@ public class ServerTCP extends ServerSocket {
         }
 
     }
-
+         /**
+         * méthode permettant au serveur d'importer la clé de chiffrement de client
+         * apartir d'un fichier txt "clientKey"
+         **/
     private SecretKeySpec getClientKey() {
         BufferedReader brf;
         SecretKeySpec key = null;
@@ -151,6 +187,13 @@ public class ServerTCP extends ServerSocket {
         return key;
     }
 
+             /**
+         * méthode permettant au serveur d'crypter (asymétrique) les messages à envoyer
+         * un moyenne d'améliorer la sécurité de ces échanges est d'ajouter au message
+         * un vecteur aléatoire afin de n'a pas savoir il y avait quoi en entrer
+         * avant le cryptage "XOR"
+         **/
+    
     private String encrypt(SecretKey key, String value) {
         try {
 
@@ -165,7 +208,10 @@ public class ServerTCP extends ServerSocket {
 
         return null;
     }
-
+         /**
+         * méthode permettant au serveur d'decrypter les messages qu'il 
+         * recoit du client avec la clé de serveur
+         **/
     private String decrypt(SecretKey key, String encrypted) {
         try {
             Cipher cipher = Cipher.getInstance("AES");
@@ -181,6 +227,10 @@ public class ServerTCP extends ServerSocket {
         return null;
     }
 
+         /**
+         * méthode permettant au client d'exporter sa clé dans un ficher txt
+         * 
+         **/
     private void exportkey() {
 
         try {

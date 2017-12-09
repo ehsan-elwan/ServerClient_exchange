@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package network.serverclient_exchange;
 
 import java.io.BufferedReader;
@@ -50,10 +45,26 @@ public class ClientTCP extends Socket {
     private final SecretKey clientkey;
     private final SecretKeySpec serverkey;
     private final Cipher cipher;
+    
+             /**
+         * @param server String: holding the server name or ip address
+	 * @param port int: port number 
+         * On a choisi le port 47101 car il n'est attribué.
+         * d'apres le site https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
+         * de "Service Name and Transport Protocol Port Number Registry Unassigned Port Number"
+         * 
+         **/
 
     public ClientTCP(String server, int port) throws IOException,
             NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, InvalidAlgorithmParameterException {
-
+         /**
+         * initializer le client:
+	 * initializer le Socket, Input/Output StreamWriter, PrintWriter,BufferedReader
+         * generer la clé de la client avec l'algo AES / exporter la clé dans un fichier txt clientKey
+         * importer la clé du server qui est generer egalement au lancement du serveur
+         * permet le client envoyer un message au serveur
+         * 
+         **/
         socket = new Socket(InetAddress.getByName(server), port);
         os = socket.getOutputStream();
         osw = new OutputStreamWriter(os);
@@ -71,27 +82,38 @@ public class ClientTCP extends Socket {
         sendMessage();
 
     }
-
+         /**
+         * méthode permettant aux clients d'envoyer des messages au serveur
+         * crypter le message avec la clé du serveur
+         * ensuite le client attend la reposne du serveur
+         * 
+         **/
     private void sendMessage() throws IOException {
 
         String inputmessage = input.nextLine();
-        String tosend = encrypt(clientkey, inputmessage);
+        String tosend = encrypt(serverkey, inputmessage);
         pw.println(tosend);
         pw.flush();
         System.out.println("Message sent to the server : " + inputmessage);
         if (inputmessage.equalsIgnoreCase("bye")) {
-            System.out.println("Client closing..");
+            System.out.println("Client is closing..");
         } else {
         recevieMessage();
         }
 
     }
+         /**
+         * méthode permettant aux clients d'recevoir des messages du serveur
+         * decrypter le message avec la clé du client
+         * ensuite le client va envoyer sa reposne au serveur
+         * 
+         **/
 
     private void recevieMessage() throws IOException {
 
         String receviedmessage = br.readLine();
         System.out.println("Message received from the server : " + receviedmessage);
-        String dec = decrypt(serverkey, receviedmessage);
+        String dec = decrypt(clientkey, receviedmessage);
         System.out.println("Message dec from the server : " + dec);
         if (dec.equalsIgnoreCase("bye")) {
             System.out.println("Server sent close commande");
@@ -104,6 +126,10 @@ public class ClientTCP extends Socket {
         return this.socket;
     }
 
+         /**
+         * méthode permettant au client d'exporter sa clé dans un ficher txt
+         * 
+         **/
     private void exportkey() {
 
         try {
@@ -118,42 +144,50 @@ public class ClientTCP extends Socket {
             Logger.getLogger(ClientTCP.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+         /**
+         * méthode permettant au client d'crypter (asymétrique) les messages à envoyer
+         * un moyenne d'améliorer la sécurité de ces échanges est d'ajouter au message
+         * un vecteur aléatoire afin de n'a pas savoir il y avait quoi en entrer
+         * avant le cryptage "XOR"
+         **/
     private String encrypt(SecretKey key, String value) {
         //String initVector = "RandomInitVector";
+        //IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
         try {
-            //IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
-            //SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
-
-            Cipher cipher = Cipher.getInstance("AES");
+            
             cipher.init(Cipher.ENCRYPT_MODE, key);
 
             byte[] encrypted = cipher.doFinal(value.getBytes());
 
             return Base64.encodeBase64String(encrypted);
-        } catch (InvalidKeyException | NoSuchAlgorithmException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException ex) {
+        } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException ex) {
             System.out.println(ex.getMessage());
         }
 
         return null;
     }
-
+         /**
+         * méthode permettant au client d'decrypter les messages qu'il 
+         * recoit du serveur avec la clé de client
+         **/
     private String decrypt(SecretKey key, String encrypted) {
         try {
 
-            Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, key);
-
             byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
 
             return new String(original);
-        } catch (InvalidKeyException | NoSuchAlgorithmException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException ex) {
+        } catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException ex) {
             System.out.println(ex.getMessage());
         }
 
         return null;
     }
 
+         /**
+         * méthode permettant au client d'importer la clé de chiffrement de serveur
+         * apartir d'un fichier txt "serverKey"
+         **/
     private SecretKeySpec getServerKey() {
         BufferedReader brf;
         SecretKeySpec key = null;

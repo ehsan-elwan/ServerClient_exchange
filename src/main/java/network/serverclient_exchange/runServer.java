@@ -16,15 +16,28 @@ import javax.crypto.NoSuchPaddingException;
  */
 public class runServer {
     
+         /**
+         * 
+	 * Simulate a server with TCP/IP Protocol listening to port 47101 waiting for connection.
+	 *
+	 **/
+    
     public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchPaddingException {
-        
+         /**
+	 * @param port int: numero de port
+         * On a choisi le port 47101 car il n'est attribué.
+         * d'apres le site https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
+         * de "Service Name and Transport Protocol Port Number Registry Unassigned Port Number"
+         * 
+         **/
+         int port = 47101;
        
         try {
-            ServerTCP server = new ServerTCP(47101);
-            //Service Name and Transport Protocol Port Number Registry Unassigned Port Number
+            // créer un serveur 
+            ServerTCP server = new ServerTCP(port);
+            // chercher une connection 
             server.getConnection();
-            
-           
+                  
         } catch (IOException ex) {
             Logger.getLogger(runServer.class.getName()).log(Level.SEVERE, null, ex);
         }
